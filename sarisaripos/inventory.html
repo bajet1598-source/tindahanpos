@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TindahanPOS – Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #F07B2F;
+    --orange-light: #FDE8D4;
+    --bg: #FAF6F1;
+    --card: #FFFFFF;
+    --text: #1A1A1A;
+    --sub: #888888;
+    --border: #F0EAE2;
+    --green: #4CAF7D;
+    --red: #FF5252;
+    --yellow: #FFB800;
+    --nav-h: 72px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); max-width:430px; margin:0 auto; min-height:100vh; }
+
+  .header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 12px; background:var(--card); }
+  .header-left { display:flex; align-items:center; gap:10px; }
+  .header-left a { font-size:20px; text-decoration:none; color:var(--text); }
+  .header h2 { font-family:'Nunito',sans-serif; font-size:20px; font-weight:800; }
+  .header-btns { display:flex; gap:8px; }
+  .add-btn { background:var(--orange); color:#fff; border:none; border-radius:20px; padding:8px 14px; font-size:12px; font-weight:600; cursor:pointer; font-family:'Poppins',sans-serif; display:flex; align-items:center; gap:5px; }
+
+  .search-wrap { padding:12px 16px; background:var(--card); border-bottom:1px solid var(--border); }
+  .search-box { display:flex; align-items:center; gap:8px; background:var(--bg); border-radius:12px; padding:10px 14px; }
+  .search-box input { border:none; background:none; outline:none; font-size:14px; font-family:'Poppins',sans-serif; width:100%; color:var(--text); }
+  .search-box input::placeholder { color:var(--sub); }
+
+  .status-row { display:flex; gap:10px; padding:14px 16px; }
+  .status-card { flex:1; border-radius:14px; padding:12px; text-align:center; }
+  .status-card .val { font-size:22px; font-weight:900; font-family:'Nunito',sans-serif; }
+  .status-card .lbl { font-size:10px; font-weight:600; margin-top:2px; }
+  .sc-all { background:var(--card); box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+  .sc-all .val { color:var(--text); } .sc-all .lbl { color:var(--sub); }
+  .sc-ok { background:#E3F7ED; } .sc-ok .val { color:var(--green); } .sc-ok .lbl { color:var(--green); }
+  .sc-low { background:#FFF8E3; } .sc-low .val { color:var(--yellow); } .sc-low .lbl { color:var(--yellow); }
+  .sc-out { background:#FFE8E8; } .sc-out .val { color:var(--red); } .sc-out .lbl { color:var(--red); }
+
+  .filter-tabs { display:flex; gap:8px; padding:0 16px 12px; overflow-x:auto; scrollbar-width:none; }
+  .filter-tabs::-webkit-scrollbar { display:none; }
+  .ftab { flex-shrink:0; padding:7px 16px; border-radius:20px; border:1.5px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; background:var(--card); color:var(--sub); }
+  .ftab.active { background:var(--orange); color:#fff; border-color:var(--orange); }
+
+  .section-title { font-family:'Nunito',sans-serif; font-size:16px; font-weight:800; padding:4px 20px 10px; }
+
+  .inv-list { padding:0 16px; display:flex; flex-direction:column; gap:10px; margin-bottom:90px; }
+  .inv-item { background:var(--card); border-radius:16px; padding:14px 16px; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+  .inv-top { display:flex; align-items:center; gap:12px; }
+  .inv-emoji { width:48px; height:48px; border-radius:13px; background:var(--bg); display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; }
+  .inv-info { flex:1; }
+  .inv-info h4 { font-size:14px; font-weight:700; }
+  .inv-info p { font-size:12px; color:var(--sub); margin-top:1px; }
+  .inv-badge { font-size:10px; padding:3px 9px; border-radius:10px; font-weight:700; white-space:nowrap; }
+  .badge-ok { background:#E3F7ED; color:var(--green); }
+  .badge-low { background:#FFF8E3; color:var(--yellow); }
+  .badge-out { background:#FFE8E8; color:var(--red); }
+  .inv-progress { margin-top:10px; }
+  .prog-header { display:flex; justify-content:space-between; font-size:11px; color:var(--sub); margin-bottom:5px; }
+  .prog-bar { height:6px; background:var(--border); border-radius:10px; overflow:hidden; }
+  .prog-fill { height:100%; border-radius:10px; transition:width 0.3s; }
+  .fill-ok { background:var(--green); } .fill-low { background:var(--yellow); } .fill-out { background:var(--red); }
+  .inv-actions { display:flex; gap:8px; margin-top:10px; }
+  .inv-btn { flex:1; padding:8px; border-radius:10px; border:none; font-size:12px; font-weight:600; cursor:pointer; font-family:'Poppins',sans-serif; }
+  .btn-restock { background:var(--orange); color:#fff; }
+  .btn-adjust { background:var(--border); color:var(--text); }
+
+  /* ── OVERLAY ── */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; }
+  .overlay.open { display:block; }
+
+  /* ── SHARED MODAL BASE ── */
+  .modal { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background:#fff; border-radius:24px 24px 0 0; z-index:201; display:none; max-height:92vh; overflow-y:auto; }
+  .modal.open { display:block; }
+  .modal-handle { width:40px; height:4px; background:var(--border); border-radius:4px; margin:16px auto 0; }
+  .modal-head { padding:16px 20px 4px; }
+  .modal-head h3 { font-family:'Nunito',sans-serif; font-size:18px; font-weight:800; }
+  .modal-head p { font-size:12px; color:var(--sub); margin-top:3px; }
+
+  /* ── ADD ITEM MODAL ── */
+  .add-tabs { display:flex; gap:0; margin:14px 20px 0; background:var(--bg); border-radius:12px; padding:4px; }
+  .add-tab { flex:1; padding:9px; text-align:center; font-size:13px; font-weight:600; border-radius:9px; cursor:pointer; color:var(--sub); transition:all 0.2s; }
+  .add-tab.active { background:#fff; color:var(--orange); box-shadow:0 1px 6px rgba(0,0,0,0.08); }
+
+  .tab-panel { display:none; padding:16px 20px 20px; }
+  .tab-panel.active { display:block; }
+
+  /* Form fields */
+  .field { margin-bottom:14px; }
+  .field label { font-size:12px; font-weight:600; color:var(--sub); display:block; margin-bottom:6px; }
+  .field input, .field select { width:100%; background:var(--bg); border:1.5px solid var(--border); border-radius:12px; padding:11px 14px; font-size:14px; font-family:'Poppins',sans-serif; color:var(--text); outline:none; }
+  .field input:focus, .field select:focus { border-color:var(--orange); }
+  .field-row { display:flex; gap:10px; }
+  .field-row .field { flex:1; }
+
+  .emoji-picker { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+  .emoji-opt { width:40px; height:40px; border-radius:10px; background:var(--bg); border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer; transition:all 0.15s; }
+  .emoji-opt.selected { border-color:var(--orange); background:var(--orange-light); }
+
+  .save-btn { width:100%; background:var(--orange); color:#fff; border:none; border-radius:16px; padding:15px; font-size:15px; font-weight:700; cursor:pointer; font-family:'Poppins',sans-serif; margin-top:4px; }
+  .save-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+  /* ── BARCODE SCAN PANEL ── */
+  .scan-area { background:#000; border-radius:16px; overflow:hidden; position:relative; height:220px; margin-bottom:14px; display:flex; align-items:center; justify-content:center; }
+  .scan-area video { width:100%; height:100%; object-fit:cover; display:none; }
+  .scan-placeholder { color:#fff; text-align:center; padding:20px; }
+  .scan-placeholder .scan-icon { font-size:48px; margin-bottom:10px; }
+  .scan-placeholder p { font-size:13px; opacity:0.7; }
+  .scan-line { position:absolute; left:10%; right:10%; height:2px; background:var(--orange); top:50%; animation:scanMove 2s ease-in-out infinite; display:none; }
+  @keyframes scanMove { 0%,100%{top:30%} 50%{top:70%} }
+  .scan-corners { position:absolute; inset:14px; pointer-events:none; display:none; }
+  .scan-corners::before, .scan-corners::after,
+  .scan-corners span::before, .scan-corners span::after {
+    content:''; position:absolute; width:20px; height:20px; border-color:var(--orange); border-style:solid;
+  }
+  .scan-corners::before { top:0; left:0; border-width:3px 0 0 3px; border-radius:4px 0 0 0; }
+  .scan-corners::after { top:0; right:0; border-width:3px 3px 0 0; border-radius:0 4px 0 0; }
+  .scan-corners span::before { bottom:0; left:0; border-width:0 0 3px 3px; border-radius:0 0 0 4px; }
+  .scan-corners span::after { bottom:0; right:0; border-width:0 3px 3px 0; border-radius:0 0 4px 0; }
+
+  .start-scan-btn { width:100%; background:var(--text); color:#fff; border:none; border-radius:14px; padding:14px; font-size:14px; font-weight:600; cursor:pointer; font-family:'Poppins',sans-serif; margin-bottom:10px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .scanned-result { background:var(--bg); border-radius:14px; padding:14px; margin-bottom:14px; border:1.5px solid var(--border); display:none; }
+  .scanned-result .sr-label { font-size:11px; color:var(--sub); font-weight:600; }
+  .scanned-result .sr-code { font-size:16px; font-weight:700; margin-top:2px; letter-spacing:1px; }
+  .scan-status { font-size:12px; text-align:center; color:var(--sub); margin-bottom:10px; }
+  .scan-status.scanning { color:var(--orange); }
+  .scan-status.found { color:var(--green); }
+
+  /* ── RESTOCK MODAL ── */
+  .qty-row { display:flex; align-items:center; justify-content:center; gap:20px; margin:16px 0; }
+  .big-qty-btn { width:48px; height:48px; border-radius:50%; border:none; font-size:24px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .bq-minus { background:var(--border); }
+  .bq-plus { background:var(--orange); color:#fff; }
+  .qty-display { font-size:32px; font-weight:900; font-family:'Nunito',sans-serif; min-width:60px; text-align:center; }
+
+  .bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background:#fff; border-top:1px solid var(--border); display:flex; align-items:center; height:var(--nav-h); padding:0 10px; z-index:100; box-shadow:0 -4px 20px rgba(0,0,0,0.06); }
+  .nav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-decoration:none; color:var(--sub); padding:8px 0; }
+  .nav-item .nav-icon { font-size:22px; }
+  .nav-item span { font-size:10px; font-weight:600; }
+  .nav-item.active { color:var(--orange); }
+  .nav-pos { flex:0 0 68px; display:flex; align-items:center; justify-content:center; }
+  .nav-pos-btn { width:54px; height:54px; border-radius:50%; background:var(--orange); display:flex; align-items:center; justify-content:center; font-size:24px; box-shadow:0 4px 16px rgba(240,123,47,0.5); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <a href="home.html">←</a>
+    <h2>Inventory</h2>
+  </div>
+  <div class="header-btns">
+    <button class="add-btn" onclick="openAddModal()">＋ Add Item</button>
+  </div>
+</div>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <span>🔍</span>
+    <input type="text" placeholder="Search inventory..." id="searchInput" oninput="renderList()">
+  </div>
+</div>
+
+<div class="status-row">
+  <div class="status-card sc-all"><div class="val" id="totalCount">0</div><div class="lbl">Total</div></div>
+  <div class="status-card sc-ok"><div class="val" id="okCount">0</div><div class="lbl">In Stock</div></div>
+  <div class="status-card sc-low"><div class="val" id="lowCount">0</div><div class="lbl">Low</div></div>
+  <div class="status-card sc-out"><div class="val" id="outCount">0</div><div class="lbl">Out</div></div>
+</div>
+
+<div class="filter-tabs">
+  <div class="ftab active" onclick="filterStatus(this,'all')">All Items</div>
+  <div class="ftab" onclick="filterStatus(this,'ok')">In Stock</div>
+  <div class="ftab" onclick="filterStatus(this,'low')">Low Stock</div>
+  <div class="ftab" onclick="filterStatus(this,'out')">Out of Stock</div>
+</div>
+
+<div class="section-title">Stock Overview</div>
+<div class="inv-list" id="invList"></div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeAll()"></div>
+
+<!-- ADD ITEM MODAL -->
+<div class="modal" id="addModal">
+  <div class="modal-handle"></div>
+  <div class="modal-head">
+    <h3>Add New Item</h3>
+    <p>Fill in details or scan barcode</p>
+  </div>
+
+  <div class="add-tabs">
+    <div class="add-tab active" id="tabManual" onclick="switchTab('manual')">✏️ Manual</div>
+    <div class="add-tab" id="tabScan" onclick="switchTab('scan')">📷 Scan Barcode</div>
+  </div>
+
+  <!-- MANUAL PANEL -->
+  <div class="tab-panel active" id="panelManual">
+    <div class="field">
+      <label>ITEM NAME</label>
+      <input type="text" id="newName" placeholder="e.g. Magic Flakes, Milo...">
+    </div>
+    <div class="field">
+      <label>CATEGORY</label>
+      <input type="text" id="newCat" placeholder="e.g. Snacks, Drinks, Condiments...">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>CURRENT STOCK</label>
+        <input type="number" id="newStock" placeholder="0" min="0">
+      </div>
+      <div class="field">
+        <label>MAX STOCK</label>
+        <input type="number" id="newMax" placeholder="100" min="1">
+      </div>
+    </div>
+    <div class="field">
+      <label>PRICE (₱)</label>
+      <input type="number" id="newPrice" placeholder="0.00" min="0" step="0.01">
+    </div>
+    <div class="field">
+      <label>PICK ICON</label>
+      <div class="emoji-picker" id="emojiPicker"></div>
+    </div>
+    <button class="save-btn" onclick="saveNewItem()">Add to Inventory</button>
+  </div>
+
+  <!-- SCAN PANEL -->
+  <div class="tab-panel" id="panelScan">
+    <div class="scan-area" id="scanArea">
+     <video id="scanVideo" playsinline autoplay muted webkit-playsinline style="display:none;width:100%;height:100%;object-fit:cover;"></video>
+      <div class="scan-line" id="scanLine"></div>
+      <div class="scan-corners" id="scanCorners"><span></span></div>
+      <div class="scan-placeholder" id="scanPlaceholder">
+        <div class="scan-icon">📷</div>
+        <p>I-tap ang button sa ibaba<br>para i-scan ang barcode</p>
+      </div>
+    </div>
+
+    <div class="scanned-result" id="scannedResult">
+      <div class="sr-label">SCANNED BARCODE</div>
+      <div class="sr-code" id="scannedCode">—</div>
+    </div>
+
+    <div class="scan-status" id="scanStatus">Camera is ready to scan</div>
+
+    <button class="start-scan-btn" id="startScanBtn" onclick="toggleScan()">
+      <span id="scanBtnIcon">📷</span>
+      <span id="scanBtnText">Start Camera Scan</span>
+    </button>
+
+    <div class="field">
+      <label>OR ENTER BARCODE MANUALLY</label>
+      <input type="text" id="manualBarcode" placeholder="Type barcode number..." oninput="onManualBarcode(this.value)">
+    </div>
+
+    <div id="scanFormFields" style="display:none;">
+      <div class="field">
+        <label>ITEM NAME</label>
+        <input type="text" id="scanName" placeholder="Item name...">
+      </div>
+      <div class="field">
+        <label>CATEGORY</label>
+        <input type="text" id="scanCat" placeholder="Category...">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>STOCK</label>
+          <input type="number" id="scanStock" placeholder="0" min="0">
+        </div>
+        <div class="field">
+          <label>MAX</label>
+          <input type="number" id="scanMax" placeholder="100" min="1">
+        </div>
+      </div>
+      <div class="field">
+        <label>PRICE (₱)</label>
+        <input type="number" id="scanPrice" placeholder="0.00" step="0.01">
+      </div>
+    </div>
+
+    <button class="save-btn" id="scanSaveBtn" style="display:none;" onclick="saveScanItem()">Add to Inventory</button>
+  </div>
+</div>
+
+<!-- RESTOCK MODAL -->
+<div class="modal" id="restockModal">
+  <div class="modal-handle"></div>
+  <div class="modal-head">
+    <h3 id="modalTitle">Restock Item</h3>
+    <p id="modalSub">Add units to inventory</p>
+  </div>
+  <div style="padding:0 20px 24px;">
+    <div class="qty-row">
+      <button class="big-qty-btn bq-minus" onclick="changeAmt(-1)">−</button>
+      <div class="qty-display" id="qtyDisplay">10</div>
+      <button class="big-qty-btn bq-plus" onclick="changeAmt(1)">+</button>
+    </div>
+    <button class="save-btn" onclick="saveRestock()">Confirm Restock</button>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="home.html" class="nav-item"><div class="nav-icon">🏠</div><span>Home</span></a>
+  <a href="pos.html" class="nav-item"><div class="nav-icon">🧾</div><span>Transaction</span></a>
+  <div class="nav-pos"><a href="pos.html" class="nav-pos-btn">🛒</a></div>
+  <a href="inventory.html" class="nav-item active"><div class="nav-icon">📦</div><span>Inventory</span></a>
+  <a href="profile.html" class="nav-item"><div class="nav-icon">👤</div><span>Profile</span></a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js"></script>
+<script>
+// Wait for ZXing to load
+window._zxingReady = new Promise(resolve => {
+  if (document.readyState === 'complete') resolve();
+  else window.addEventListener('load', resolve);
+});
+</script>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const EMOJIS = ['🍿','🧃','🍜','🧴','🍬','🌾','🥤','🍦','🛍️','🧁','🍱','🥛','🍚','🧂','🥫','🍫','🧇','🍳','🥚','🫙'];
+function loadInventory() {
+  try {
+    const raw = localStorage.getItem('tindahan_inventory');
+    if (raw) { const d = JSON.parse(raw); if (Array.isArray(d)) return d; }
+  } catch(e){}
+  return [];
+}
+function saveInventory() {
+  localStorage.setItem('tindahan_inventory', JSON.stringify(inventory));
+}
+
+let inventory = loadInventory();
+let currentFilter = 'all';
+let restockId = null;
+let restockAmt = 10;
+let selectedEmoji = '🛍️';
+let scanStream = null;
+let scanning = false;
+let barcodeWorker = null;
+let scannedBarcode = '';
+
+// ── EMOJI PICKER ──────────────────────────────────────────────────────────────
+function buildEmojiPicker() {
+  const picker = document.getElementById('emojiPicker');
+  picker.innerHTML = EMOJIS.map(e =>
+    `<div class="emoji-opt${e===selectedEmoji?' selected':''}" onclick="selectEmoji('${e}',this)">${e}</div>`
+  ).join('');
+}
+function selectEmoji(e, el) {
+  selectedEmoji = e;
+  document.querySelectorAll('.emoji-opt').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ── STATUS ────────────────────────────────────────────────────────────────────
+function getStatus(item) {
+  if (item.stock === 0) return 'out';
+  if (item.stock / item.max <= 0.2) return 'low';
+  return 'ok';
+}
+
+// ── FILTER ────────────────────────────────────────────────────────────────────
+function filterStatus(el, f) {
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  currentFilter = f;
+  renderList();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderList() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = inventory.filter(i => {
+    const s = getStatus(i);
+    return (currentFilter==='all'||s===currentFilter) && i.name.toLowerCase().includes(q);
+  });
+
+  document.getElementById('totalCount').textContent = inventory.length;
+  document.getElementById('okCount').textContent = inventory.filter(i=>getStatus(i)==='ok').length;
+  document.getElementById('lowCount').textContent = inventory.filter(i=>getStatus(i)==='low').length;
+  document.getElementById('outCount').textContent = inventory.filter(i=>getStatus(i)==='out').length;
+
+  document.getElementById('invList').innerHTML = filtered.length ? filtered.map(i => {
+    const s = getStatus(i);
+    const pct = Math.round((i.stock/i.max)*100);
+    const badgeClass = s==='ok'?'badge-ok':s==='low'?'badge-low':'badge-out';
+    const fillClass = s==='ok'?'fill-ok':s==='low'?'fill-low':'fill-out';
+    const label = s==='ok'?'In Stock':s==='low'?'Low Stock':'Out of Stock';
+    return `<div class="inv-item">
+      <div class="inv-top">
+        <div class="inv-emoji">${i.emoji}</div>
+        <div class="inv-info">
+          <h4>${i.name}</h4>
+          <p>${i.cat} · ${i.stock}/${i.max} units${i.price?(' · ₱'+i.price.toFixed(2)):''}</p>
+        </div>
+        <span class="inv-badge ${badgeClass}">${label}</span>
+      </div>
+      <div class="inv-progress">
+        <div class="prog-header"><span>Stock Level</span><span>${pct}%</span></div>
+        <div class="prog-bar"><div class="prog-fill ${fillClass}" style="width:${pct}%"></div></div>
+      </div>
+      <div class="inv-actions">
+        <button class="inv-btn btn-restock" onclick="openRestock(${i.id})">+ Restock</button>
+        <button class="inv-btn btn-adjust" onclick="adjustStock(${i.id})">Adjust</button>
+      </div>
+    </div>`;
+  }).join('') : `<div style="text-align:center;padding:40px 20px;color:var(--sub);font-size:13px;">
+    <div style="font-size:36px;margin-bottom:10px;">📦</div>
+    <p>Walang nakitang produkto</p></div>`;
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function openOverlay() {
+  document.getElementById('overlay').classList.add('open');
+}
+function closeAll() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('addModal').classList.remove('open');
+  document.getElementById('restockModal').classList.remove('open');
+  stopScan();
+}
+
+function openAddModal() {
+  buildEmojiPicker();
+  switchTab('manual');
+  document.getElementById('addModal').classList.add('open');
+  openOverlay();
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('tabManual').classList.toggle('active', tab==='manual');
+  document.getElementById('tabScan').classList.toggle('active', tab==='scan');
+  document.getElementById('panelManual').classList.toggle('active', tab==='manual');
+  document.getElementById('panelScan').classList.toggle('active', tab==='scan');
+  if (tab !== 'scan') stopScan();
+}
+
+// ── SAVE MANUAL ───────────────────────────────────────────────────────────────
+function saveNewItem() {
+  const name = document.getElementById('newName').value.trim();
+  const cat = document.getElementById('newCat').value.trim() || 'General';
+  const stock = parseInt(document.getElementById('newStock').value) || 0;
+  const max = parseInt(document.getElementById('newMax').value) || 100;
+  const price = parseFloat(document.getElementById('newPrice').value) || 0;
+  if (!name) { alert('Ilagay ang pangalan ng item.'); return; }
+  const newItem = { id: Date.now(), name, emoji: selectedEmoji, cat, stock, max, price };
+  inventory.push(newItem);
+  saveInventory();
+  renderList();
+  closeAll();
+  document.getElementById('newName').value = '';
+  document.getElementById('newCat').value = '';
+  document.getElementById('newStock').value = '';
+  document.getElementById('newMax').value = '';
+  document.getElementById('newPrice').value = '';
+}
+
+// ── RESTOCK ───────────────────────────────────────────────────────────────────
+function openRestock(id) {
+  restockId = id;
+  restockAmt = 10;
+  const item = inventory.find(x=>x.id===id);
+  document.getElementById('modalTitle').textContent = 'Restock — ' + item.name;
+  document.getElementById('modalSub').textContent = 'Current stock: ' + item.stock + ' units';
+  document.getElementById('qtyDisplay').textContent = restockAmt;
+  document.getElementById('restockModal').classList.add('open');
+  openOverlay();
+}
+function changeAmt(d) {
+  restockAmt = Math.max(1, restockAmt + d);
+  document.getElementById('qtyDisplay').textContent = restockAmt;
+}
+function saveRestock() {
+  const item = inventory.find(x=>x.id===restockId);
+  item.stock = Math.min(item.max, item.stock + restockAmt);
+  saveInventory();
+  closeAll();
+  renderList();
+}
+function adjustStock(id) {
+  const item = inventory.find(x=>x.id===id);
+  const v = prompt(`Adjust stock for ${item.name} (current: ${item.stock}):`, item.stock);
+  if (v !== null) { item.stock = Math.max(0, parseInt(v)||0); saveInventory(); renderList(); }
+}
+
+// ── BARCODE SCANNER ────────────────────────────────────────────────────────────
+let zxingReader = null;
+
+async function toggleScan() {
+  if (scanning) { stopScan(); return; }
+  await startScan();
+}
+
+async function startScan() {
+  const video       = document.getElementById('scanVideo');
+  const placeholder = document.getElementById('scanPlaceholder');
+  const scanLine    = document.getElementById('scanLine');
+  const scanCorners = document.getElementById('scanCorners');
+  const statusEl    = document.getElementById('scanStatus');
+  const btnText     = document.getElementById('scanBtnText');
+  const btnIcon     = document.getElementById('scanBtnIcon');
+
+  statusEl.textContent = 'Starting camera…';
+  statusEl.className   = 'scan-status scanning';
+
+  // ── Step 1: Get camera stream directly via getUserMedia ──
+  let stream;
+  try {
+    // Try back camera first
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { exact: 'environment' } }
+      });
+    } catch(e) {
+      // Fallback: any camera
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    }
+  } catch(err) {
+    statusEl.textContent = '❌ Camera permission denied. Use manual entry below.';
+    statusEl.className = 'scan-status';
+    console.error('getUserMedia failed:', err);
+    return;
+  }
+
+  // ── Step 2: Attach stream to video ──
+  video.srcObject = stream;
+  scanStream = stream;
+  scanning = true;
+
+  video.style.display    = 'block';
+  placeholder.style.display = 'none';
+  scanLine.style.display    = 'block';
+  scanCorners.style.display = 'block';
+  btnText.textContent = 'Stop Scanning';
+  btnIcon.textContent  = '⏹';
+  statusEl.textContent = 'Camera on — point at a barcode';
+  statusEl.className   = 'scan-status scanning';
+
+  // Play the video
+  try { await video.play(); } catch(e) { console.warn('video.play():', e); }
+
+  // ── Step 3: Pick decode engine ──
+  await window._zxingReady;
+
+  if (window.ZXing) {
+    _decodeWithZXing(video, stream);
+  } else if ('BarcodeDetector' in window) {
+    _decodeWithNative(video);
+  } else {
+    statusEl.textContent = '⚠️ Auto-scan not supported. Enter barcode manually.';
+    statusEl.className = 'scan-status';
+  }
+}
+
+function _decodeWithZXing(video, stream) {
+  const statusEl = document.getElementById('scanStatus');
+  try {
+    const hints = new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+      ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39,
+      ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E,
+      ZXing.BarcodeFormat.QR_CODE, ZXing.BarcodeFormat.DATA_MATRIX,
+      ZXing.BarcodeFormat.ITF, ZXing.BarcodeFormat.CODABAR,
+    ]);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+
+    zxingReader = new ZXing.BrowserMultiFormatReader(hints, 200);
+
+    // Use decodeFromStream so we control the stream ourselves
+    zxingReader.decodeFromStream(stream, video, (result, err) => {
+      if (!scanning) return;
+      if (result) {
+        stopScan();
+        onBarcodeFound(result.getText());
+      }
+      // NotFoundException is normal (no barcode in frame yet) — ignore
+    });
+  } catch(err) {
+    console.warn('ZXing decode error:', err);
+    statusEl.textContent = '⚠️ Scanner error. Try manual entry.';
+    statusEl.className = 'scan-status';
+  }
+}
+
+function _decodeWithNative(video) {
+  const detector = new BarcodeDetector({
+    formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code']
+  });
+  async function tick() {
+    if (!scanning) return;
+    try {
+      if (video.readyState >= 2) {
+        const found = await detector.detect(video);
+        if (found.length) { stopScan(); onBarcodeFound(found[0].rawValue); return; }
+      }
+    } catch(e) {}
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function stopScan() {
+  scanning = false;
+
+  if (zxingReader) {
+    try { zxingReader.reset(); } catch(e) {}
+    zxingReader = null;
+  }
+  if (scanStream) {
+    scanStream.getTracks().forEach(t => t.stop());
+    scanStream = null;
+  }
+
+  const video = document.getElementById('scanVideo');
+  video.srcObject = null;
+  video.style.display = 'none';
+
+  document.getElementById('scanPlaceholder').style.display = 'flex';
+  document.getElementById('scanLine').style.display    = 'none';
+  document.getElementById('scanCorners').style.display = 'none';
+  document.getElementById('scanBtnText').textContent = 'Start Camera Scan';
+  document.getElementById('scanBtnIcon').textContent  = '📷';
+  document.getElementById('scanStatus').textContent = 'Camera is ready to scan';
+  document.getElementById('scanStatus').className   = 'scan-status';
+}
+
+function onBarcodeFound(code) {
+  scannedBarcode = code;
+  document.getElementById('scannedResult').style.display  = 'block';
+  document.getElementById('scannedCode').textContent       = code;
+  document.getElementById('manualBarcode').value           = code;
+  document.getElementById('scanFormFields').style.display  = 'block';
+  document.getElementById('scanSaveBtn').style.display     = 'block';
+  document.getElementById('scanStatus').textContent = '✅ Barcode detected!';
+  document.getElementById('scanStatus').className   = 'scan-status found';
+  document.getElementById('scanName').focus();
+}
+
+function onManualBarcode(val) {
+  const show = val.length >= 4;
+  scannedBarcode = show ? val : '';
+  document.getElementById('scannedResult').style.display  = show ? 'block' : 'none';
+  document.getElementById('scannedCode').textContent       = val;
+  document.getElementById('scanFormFields').style.display  = show ? 'block' : 'none';
+  document.getElementById('scanSaveBtn').style.display     = show ? 'block' : 'none';
+}
+
+function saveScanItem() {
+  const name  = document.getElementById('scanName').value.trim();
+  const cat   = document.getElementById('scanCat').value.trim() || 'General';
+  const stock = parseInt(document.getElementById('scanStock').value)   || 0;
+  const max   = parseInt(document.getElementById('scanMax').value)     || 100;
+  const price = parseFloat(document.getElementById('scanPrice').value) || 0;
+  if (!name) { alert('Ilagay ang pangalan ng item.'); return; }
+  inventory.push({ id: Date.now(), name, emoji: '🛍️', cat, stock, max, price, barcode: scannedBarcode });
+  saveInventory();
+  renderList();
+  closeAll();
+  ['scannedResult','scanFormFields','scanSaveBtn'].forEach(id =>
+    document.getElementById(id).style.display = 'none'
+  );
+  ['manualBarcode','scanName','scanCat','scanStock','scanMax','scanPrice'].forEach(id =>
+    document.getElementById(id).value = ''
+  );
+}
+
+renderList();
+</script>
+</body>
+</html>

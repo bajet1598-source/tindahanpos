@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TindahanPOS – Point of Sale</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #F07B2F;
+    --orange-light: #FDE8D4;
+    --orange-mid: #FAC89A;
+    --bg: #FAF6F1;
+    --card: #FFFFFF;
+    --text: #1A1A1A;
+    --sub: #888888;
+    --border: #F0EAE2;
+    --green: #4CAF7D;
+    --nav-h: 72px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); max-width:430px; margin:0 auto; min-height:100vh; overflow-x:hidden; }
+
+  /* HEADER */
+  .header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 12px; background:var(--card); }
+  .header-left { display:flex; align-items:center; gap:10px; }
+  .header-left a { font-size:20px; text-decoration:none; color:var(--text); }
+  .header h2 { font-family:'Nunito',sans-serif; font-size:20px; font-weight:800; }
+  .add-btn { background:var(--orange); color:#fff; border:none; border-radius:20px; padding:8px 16px; font-size:13px; font-weight:600; cursor:pointer; font-family:'Poppins',sans-serif; }
+
+  /* SEARCH */
+  .search-wrap { padding:12px 16px; background:var(--card); border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center; }
+  .search-box { flex:1; display:flex; align-items:center; gap:8px; background:var(--bg); border-radius:12px; padding:10px 14px; }
+  .search-box input { border:none; background:none; outline:none; font-size:14px; font-family:'Poppins',sans-serif; width:100%; color:var(--text); }
+  .search-box input::placeholder { color:var(--sub); }
+  .filter-btn { width:40px; height:40px; border-radius:12px; background:var(--bg); border:none; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+  /* CATEGORY TABS */
+  .cats { display:flex; gap:8px; padding:12px 16px; overflow-x:auto; scrollbar-width:none; }
+  .cats::-webkit-scrollbar { display:none; }
+  .cat { flex-shrink:0; padding:7px 16px; border-radius:20px; border:1.5px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; background:var(--card); color:var(--sub); transition:all 0.15s; }
+  .cat.active { background:var(--orange); color:#fff; border-color:var(--orange); }
+
+  /* PRODUCTS GRID */
+  .products { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:4px 16px 16px; margin-bottom:160px; }
+  .prod-card { background:var(--card); border-radius:18px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.05); cursor:pointer; transition:transform 0.15s; position:relative; }
+  .prod-card:active { transform:scale(0.97); }
+  .prod-card.selected { border:2px solid var(--orange); }
+  .prod-check { position:absolute; top:8px; right:8px; width:24px; height:24px; border-radius:50%; background:var(--orange); display:none; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:700; z-index:2; }
+  .prod-card.selected .prod-check { display:flex; }
+  .prod-img { width:100%; height:120px; object-fit:cover; background:#f0ebe5; display:flex; align-items:center; justify-content:center; font-size:50px; }
+  .prod-info { padding:10px 12px 12px; }
+  .prod-name { font-size:13px; font-weight:600; }
+  .prod-price { font-size:14px; font-weight:700; color:var(--orange); font-family:'Nunito',sans-serif; margin-top:2px; }
+  .prod-controls { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+  .qty-control { display:flex; align-items:center; gap:6px; }
+  .qty-btn { width:26px; height:26px; border-radius:50%; border:none; cursor:pointer; font-size:16px; font-weight:700; display:flex; align-items:center; justify-content:center; transition:transform 0.1s; }
+  .qty-btn:active { transform:scale(0.9); }
+  .qty-minus { background:var(--border); color:var(--text); }
+  .qty-plus { background:var(--orange); color:#fff; }
+  .qty-num { font-size:14px; font-weight:700; min-width:20px; text-align:center; font-family:'Nunito',sans-serif; }
+
+  /* CART FOOTER */
+  .cart-footer { position:fixed; bottom:var(--nav-h); left:50%; transform:translateX(-50%); width:100%; max-width:430px; background:var(--card); padding:12px 20px; border-top:1px solid var(--border); box-shadow:0 -4px 20px rgba(0,0,0,0.06); z-index:90; display:flex; align-items:center; justify-content:space-between; }
+  .cart-info { display:flex; align-items:center; gap:10px; cursor:pointer; }
+  .cart-toggle { background:none; border:none; font-size:18px; cursor:pointer; }
+ 
+  .cart-summary .items { font-size:12px; color:var(--sub); font-weight:600; }
+  .cart-summary .total { font-size:18px; font-weight:800; font-family:'Nunito',sans-serif; color:var(--text); }
+  .next-btn { background:var(--orange); color:#fff; border:none; border-radius:24px; padding:13px 28px; font-size:15px; font-weight:700; cursor:pointer; font-family:'Poppins',sans-serif; box-shadow:0 4px 12px rgba(240,123,47,0.4); }
+
+  /* TRANSACTION MODAL */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:200; }
+  .overlay.open { display:block; }
+  .modal { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background:#fff; border-radius:24px 24px 0 0; padding:20px; z-index:201; max-height:80vh; overflow-y:auto; }
+  .modal-handle { width:40px; height:4px; background:var(--border); border-radius:4px; margin:0 auto 16px; }
+  .modal h3 { font-family:'Nunito',sans-serif; font-size:18px; font-weight:800; margin-bottom:14px; }
+  .modal-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:14px; }
+  .modal-row:last-of-type { border:none; }
+  .modal-row .lbl { color:var(--sub); }
+  .modal-row .val { font-weight:600; }
+  .modal-total { display:flex; justify-content:space-between; padding:14px 0; font-size:17px; font-weight:800; font-family:'Nunito',sans-serif; border-top:2px solid var(--border); }
+  .modal-total .val { color:var(--orange); }
+  .confirm-btn { width:100%; background:var(--orange); color:#fff; border:none; border-radius:16px; padding:16px; font-size:16px; font-weight:700; cursor:pointer; font-family:'Poppins',sans-serif; margin-top:12px; }
+
+  /* BOTTOM NAV */
+  .bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; background:#fff; border-top:1px solid var(--border); display:flex; align-items:center; height:var(--nav-h); padding:0 10px; z-index:100; box-shadow:0 -4px 20px rgba(0,0,0,0.06); }
+  .nav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-decoration:none; color:var(--sub); padding:8px 0; }
+  .nav-item .nav-icon { font-size:22px; }
+  .nav-item span { font-size:10px; font-weight:600; }
+  .nav-item.active { color:var(--orange); }
+  .nav-pos { flex:0 0 68px; display:flex; align-items:center; justify-content:center; }
+  .nav-pos-btn { width:54px; height:54px; border-radius:50%; background:var(--orange); display:flex; align-items:center; justify-content:center; font-size:24px; box-shadow:0 4px 16px rgba(240,123,47,0.5); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <a href="home.html">←</a>
+    <h2>Purchase Management</h2>
+  </div>
+  <button class="add-btn">Add Item</button>
+</div>
+
+<!-- SEARCH -->
+<div class="search-wrap">
+  <div class="search-box">
+    <span>🔍</span>
+ <input type="text" placeholder="Maghanap ng produkto..." id="searchInput" oninput="filterProducts()">
+  </div>
+  <button class="filter-btn">⇄</button>
+</div>
+
+<!-- CATEGORY TABS -->
+<div class="cats">
+  <div class="cat active" onclick="filterCat(this,'all')">Lahat</div>
+<div class="cat" onclick="filterCat(this,'inumin')">Inumin</div>
+<div class="cat" onclick="filterCat(this,'bigas')">Bigas & Asin</div>
+<div class="cat" onclick="filterCat(this,'snacks')">Merienda</div>
+<div class="cat" onclick="filterCat(this,'luto')">Luto</div>
+<div class="cat" onclick="filterCat(this,'laundry')">Laundry</div>
+<div class="cat" onclick="filterCat(this,'iba')">Iba Pa</div>
+
+  <div class="cat" onclick="filterCat(this,'inumin')">Inumin</div>
+  <div class="cat" onclick="filterCat(this,'coffee')">Coffee</div>
+  <div class="cat" onclick="filterCat(this,'snacks')">MERIENDA</div>
+  <div class="cat" onclick="filterCat(this,'luto')">Luto</div>
+  <div class="cat" onclick="filterCat(this,'personal')">Personal Care</div>
+  <div class="cat" onclick="filterCat(this,'iba')">Iba Pa</div>
+</div>
+
+<!-- PRODUCTS -->
+<div class="products" id="productGrid">
+  <!-- Rendered by JS -->
+</div>
+
+<!-- CART FOOTER -->
+<div class="cart-footer" id="cartFooter" style="display:none;">
+  <div class="cart-info" onclick="openModal()">
+    <button class="cart-toggle">^</button>
+    <div class="cart-summary">
+      <div class="items" id="cartItemCount">0 Items</div>
+      <div class="total" id="cartTotal">$0.00</div>
+    </div>
+  </div>
+  <button class="next-btn" onclick="openModal()">Next</button>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="overlay" id="overlay" onclick="closeModal()"></div>
+<div class="modal" id="modal">
+  <div class="modal-handle"></div>
+  <h3>🧾 Order Summary</h3>
+  <div id="modalItems"></div>
+  <div class="modal-total">
+    <span>Total</span>
+    <span class="val" id="modalTotal">$0.00</span>
+  </div>
+  <button class="confirm-btn" onclick="confirmSale()">Confirm Sale →</button>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a href="home.html" class="nav-item">
+    <div class="nav-icon">🏠</div>
+    <span>Home</span>
+  </a>
+  <a href="pos.html" class="nav-item active">
+    <div class="nav-icon">🧾</div>
+    <span>Transaction</span>
+  </a>
+  <div class="nav-pos">
+    <a href="pos.html" class="nav-pos-btn">🛒</a>
+  </div>
+  <a href="inventory.html" class="nav-item">
+    <div class="nav-icon">📦</div>
+    <span>Inventory</span>
+  </a>
+  <a href="profile.html" class="nav-item">
+    <div class="nav-icon">👤</div>
+    <span>Profile</span>
+  </a>
+</nav>
+
+<script>
+const products = [
+  { id:1, name:'Tasty Snacks', price:7.50, emoji:'🍿', cat:'snacks' },
+  { id:2, name:'Fish and Chips', price:12.50, emoji:'🐟', cat:'grill' },
+  { id:3, name:'Grilled Salmon', price:7.50, emoji:'🥩', cat:'grill' },
+  { id:4, name:'Beef Fajitas', price:7.50, emoji:'🌮', cat:'grill' },
+  { id:5, name:'Classic Burger', price:9.00, emoji:'🍔', cat:'burger' },
+  { id:6, name:'Chicken Shake', price:6.00, emoji:'🥤', cat:'shakes' },
+  { id:7, name:'Fruit Salad', price:5.50, emoji:'🍓', cat:'fruits' },
+  { id:8, name:'Caesar Salad', price:8.00, emoji:'🥗', cat:'salad' },
+];
+
+let cart = {};
+let currentCat = 'all';
+let searchTerm = '';
+
+function filterCat(el, cat) {
+  document.querySelectorAll('.cat').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  currentCat = cat;
+  renderProducts();
+}
+
+function filterProducts() {
+  searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  renderProducts();
+}
+
+function renderProducts() {
+  const grid = document.getElementById('productGrid');
+  const filtered = products.filter(p => {
+    const matchCat = currentCat === 'all' || p.cat === currentCat;
+    const matchSearch = p.name.toLowerCase().includes(searchTerm);
+    return matchCat && matchSearch;
+  });
+  grid.innerHTML = filtered.map(p => {
+    const qty = cart[p.id]?.qty || 0;
+    const sel = qty > 0 ? 'selected' : '';
+    return `<div class="prod-card ${sel}" id="card-${p.id}">
+      <div class="prod-check">✓</div>
+      <div class="prod-img">${p.emoji}</div>
+      <div class="prod-info">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-price">$${p.price.toFixed(2)}</div>
+        <div class="prod-controls">
+          <div class="qty-control">
+            <button class="qty-btn qty-minus" onclick="changeQty(${p.id},-1)">−</button>
+            <div class="qty-num" id="qty-${p.id}">${qty}</div>
+            <button class="qty-btn qty-plus" onclick="changeQty(${p.id},1)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function changeQty(id, delta) {
+  const p = products.find(x=>x.id===id);
+  if(!cart[id]) cart[id] = { ...p, qty:0 };
+  cart[id].qty = Math.max(0, cart[id].qty + delta);
+  if(cart[id].qty === 0) delete cart[id];
+  renderProducts();
+  updateCart();
+}
+
+function updateCart() {
+  const items = Object.values(cart);
+  const count = items.reduce((s,i)=>s+i.qty,0);
+  const total = items.reduce((s,i)=>s+i.qty*i.price,0);
+  document.getElementById('cartItemCount').textContent = count + ' Item' + (count!==1?'s':'');
+  document.getElementById('cartTotal').textContent = '$' + total.toFixed(2);
+  document.getElementById('cartFooter').style.display = count > 0 ? 'flex' : 'none';
+}
+
+function openModal() {
+  const items = Object.values(cart);
+  const total = items.reduce((s,i)=>s+i.qty*i.price,0);
+  document.getElementById('modalItems').innerHTML = items.map(i=>`
+    <div class="modal-row">
+      <span>${i.emoji} ${i.name} × ${i.qty}</span>
+      <span class="val">$${(i.price*i.qty).toFixed(2)}</span>
+    </div>`).join('');
+  document.getElementById('modalTotal').textContent = '$' + total.toFixed(2);
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('modal').style.display='block';
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+}
+
+function confirmSale() {
+  closeModal();
+  alert('Sale confirmed! ✅\nThank you for your order.');
+  cart = {};
+  updateCart();
+  renderProducts();
+}
+
+renderProducts();
+</script>
+</body>
+</html>
